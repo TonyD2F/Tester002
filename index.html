@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08070f" />
+  <title>SMASH ARENA — Offline Brawler</title>
+  <meta name="description" content="A fully offline, four-fighter platform brawler. Local multiplayer, CPUs, three stages, no downloads." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23ff7a3d'/%3E%3Cstop offset='1' stop-color='%23ff2d78'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%230b0a14'/%3E%3Cpath d='M36 9 18 36h11l-4 19 20-29H34l2-17z' fill='url(%23g)'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" width="1280" height="720" aria-label="Smash Arena game stage"></canvas>
+
+    <div id="hud" class="hud" aria-live="polite"></div>
+
+    <div id="screenLayer" class="screen-layer">
+
+      <section id="titleScreen" class="screen title-screen">
+        <div class="title-top">
+          <div class="brandmark"><span class="brand-dot"></span> OFFLINE ARCADE <span class="brand-rule"></span> NO. 01</div>
+          <div class="title-kicker">4 FIGHTERS · 3 STAGES · 0 DOWNLOADS</div>
+        </div>
+
+        <div class="title-center">
+          <div class="logo-wrap">
+            <div class="logo-super">SUPER</div>
+            <h1 class="logo-main" data-text="SMASH">SMASH</h1>
+            <div class="logo-arena"><span></span>ARENA<span></span></div>
+          </div>
+          <p class="tagline">Launch your rivals. Steal the stock. Own the arena.</p>
+          <div class="title-actions">
+            <button class="btn primary xl" id="quickPlay" aria-label="Play">Play</button>
+            <button class="btn large" id="customPlay">Custom Match</button>
+            <button class="btn ghost large" id="howToPlay">How to Play</button>
+          </div>
+          <p class="press-hint">PRESS <kbd>ENTER</kbd> TO FIGHT · <kbd>ESC</kbd> TO PAUSE</p>
+        </div>
+
+        <div class="title-foot">
+          <div class="foot-card"><b>4</b><span>FIGHTERS</span></div>
+          <div class="foot-card"><b>3</b><span>STAGES</span></div>
+          <div class="foot-card"><b>∞</b><span>REMIXES</span></div>
+          <div class="foot-note">Built with canvas, Web Audio &amp; pure spite for loading screens.</div>
+        </div>
+      </section>
+
+      <section id="selectScreen" class="screen select-screen hidden">
+        <header class="top-bar">
+          <button class="icon-btn back" id="selectBack" aria-label="Back to title">←</button>
+          <div class="screen-heading">
+            <p class="eyebrow">CUSTOM MATCH · 01</p>
+            <h2>CHOOSE YOUR FIGHTERS</h2>
+          </div>
+          <div class="level-control">
+            <span>CPU LEVEL</span>
+            <div class="segmented" id="cpuLevelPicker">
+              <button data-level="1">ROOKIE</button>
+              <button data-level="2" class="on">NORMAL</button>
+              <button data-level="3">ACE</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="select-main">
+          <div class="char-grid" id="charGrid"></div>
+          <aside class="lineup-panel">
+            <div class="panel-title"><span>LINEUP</span><small>Click a slot, then a fighter</small></div>
+            <div id="slotList" class="slot-list"></div>
+            <div class="lineup-tip">
+              <span class="tip-key">P1</span> WASD + F / G / H / SHIFT
+              <br />
+              <span class="tip-key">P2</span> ARROWS + , / . / / / '
+              <br />
+              <span class="tip-key">PAD</span> Any gamepad auto-joins
+            </div>
+            <button class="btn primary wide" id="toStage">Choose Stage <span class="arrow">→</span></button>
+          </aside>
+        </div>
+      </section>
+
+      <section id="stageScreen" class="screen stage-screen hidden">
+        <header class="top-bar">
+          <button class="icon-btn back" id="stageBack" aria-label="Back to fighters">←</button>
+          <div class="screen-heading">
+            <p class="eyebrow">CUSTOM MATCH · 02</p>
+            <h2>PICK THE BATTLEFIELD</h2>
+          </div>
+          <div class="stock-control">
+            <span>STOCKS</span>
+            <div class="segmented" id="stockPicker">
+              <button data-stocks="1">1</button>
+              <button data-stocks="2">2</button>
+              <button data-stocks="3" class="on">3</button>
+              <button data-stocks="4">4</button>
+              <button data-stocks="5">5</button>
+            </div>
+          </div>
+        </header>
+        <div class="stage-grid" id="stageGrid"></div>
+        <div class="stage-foot">
+          <div class="stage-blurb" id="stageBlurb"></div>
+          <button class="btn primary xl" id="startFight">Fight <span class="arrow">→</span></button>
+        </div>
+      </section>
+
+      <section id="resultsScreen" class="screen results-screen hidden">
+        <div class="results-card">
+          <p class="eyebrow" id="resultEyebrow">MATCH COMPLETE</p>
+          <h2 class="results-title" id="resultTitle">VICTORY</h2>
+          <div class="winner-strip" id="winnerStrip"></div>
+          <div class="result-table" id="resultTable"></div>
+          <div class="result-actions">
+            <button class="btn primary large" id="rematch">Rematch</button>
+            <button class="btn large" id="resultsCustom">Change Fighters</button>
+            <button class="btn ghost large" id="resultsTitle">Title Screen</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="pauseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <div class="modal-card pause-card">
+          <p class="eyebrow">TIME OUT</p>
+          <h2 id="pauseTitle">PAUSED</h2>
+          <div class="pause-actions">
+            <button class="btn primary wide" id="resumeBtn">Resume</button>
+            <button class="btn wide" id="restartBtn">Restart Match</button>
+            <button class="btn wide" id="pauseControlsBtn">Controls</button>
+            <button class="btn ghost wide" id="quitBtn">Quit to Title</button>
+          </div>
+          <p class="pause-hint"><kbd>ESC</kbd> to resume · sound and settings stay offline.</p>
+        </div>
+      </div>
+
+      <div id="howToModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="howToTitle">
+        <div class="modal-card howto-card">
+          <button class="icon-btn close" id="howToClose" aria-label="Close controls">×</button>
+          <p class="eyebrow">FIELD MANUAL</p>
+          <h2 id="howToTitle">HOW TO SMASH</h2>
+          <div class="howto-grid">
+            <div class="howto-col">
+              <h3>PLAYER 1</h3>
+              <div class="keyrow"><span>Move / Jump</span><b><kbd>A</kbd><kbd>D</kbd><kbd>W</kbd></b></div>
+              <div class="keyrow"><span>Crouch / Fast-fall</span><b><kbd>S</kbd></b></div>
+              <div class="keyrow"><span>Attack / Charge</span><b><kbd>F</kbd></b></div>
+              <div class="keyrow"><span>Special</span><b><kbd>G</kbd></b></div>
+              <div class="keyrow"><span>Shield</span><b><kbd>H</kbd></b></div>
+              <div class="keyrow"><span>Dodge</span><b><kbd>SHIFT</kbd></b></div>
+            </div>
+            <div class="howto-col">
+              <h3>PLAYER 2</h3>
+              <div class="keyrow"><span>Move / Jump</span><b><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd></b></div>
+              <div class="keyrow"><span>Crouch / Fast-fall</span><b><kbd>↓</kbd></b></div>
+              <div class="keyrow"><span>Attack / Charge</span><b><kbd>,</kbd></b></div>
+              <div class="keyrow"><span>Special</span><b><kbd>.</kbd></b></div>
+              <div class="keyrow"><span>Shield</span><b><kbd>/</kbd></b></div>
+              <div class="keyrow"><span>Dodge</span><b><kbd>'</kbd></b></div>
+            </div>
+            <div class="howto-col">
+              <h3>GAMEPAD</h3>
+              <div class="keyrow"><span>Move</span><b>STICK / D-PAD</b></div>
+              <div class="keyrow"><span>Jump</span><b>A</b></div>
+              <div class="keyrow"><span>Attack</span><b>X</b></div>
+              <div class="keyrow"><span>Special</span><b>B</b></div>
+              <div class="keyrow"><span>Shield</span><b>RB / RT</b></div>
+              <div class="keyrow"><span>Dodge</span><b>LB / LT</b></div>
+            </div>
+          </div>
+          <div class="howto-rules">
+            <div><b>DAMAGE %</b> Rises as you get hit. Higher percent means bigger launches.</div>
+            <div><b>STOCKS</b> Blast out of the arena and you lose one. Last fighter standing wins.</div>
+            <div><b>SPECIALS</b> Neutral, forward, up and down each do something different. Up special is your recovery.</div>
+            <div><b>SHIELD</b> Blocks damage but drains. Down special counters. Time your dodges.</div>
+          </div>
+          <p class="howto-foot">Hold <kbd>F</kbd> while grounded to charge smash attacks. Tap for speed. You can drift in the air while attacking.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="system-buttons">
+      <button id="soundBtn" class="sys-btn" aria-label="Mute audio" title="Mute audio">SOUND <b>ON</b></button>
+      <button id="fullscreenBtn" class="sys-btn" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
