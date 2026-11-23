@@ -127,9 +127,10 @@
             <button class="btn primary wide" id="resumeBtn">Resume</button>
             <button class="btn wide" id="restartBtn">Restart Match</button>
             <button class="btn wide" id="pauseControlsBtn">Controls</button>
+            <button class="btn wide" id="touchToggleBtn">Touch Controls <b>ON</b></button>
             <button class="btn ghost wide" id="quitBtn">Quit to Title</button>
           </div>
-          <p class="pause-hint"><kbd>ESC</kbd> to resume · sound and settings stay offline.</p>
+          <p class="pause-hint"><kbd>ESC</kbd> or Resume to continue · sound and settings stay offline.</p>
         </div>
       </div>
 
@@ -165,6 +166,7 @@
               <div class="keyrow"><span>Special</span><b>B</b></div>
               <div class="keyrow"><span>Shield</span><b>RB / RT</b></div>
               <div class="keyrow"><span>Dodge</span><b>LB / LT</b></div>
+              <div class="keyrow"><span>Touch</span><b>ON-SCREEN</b></div>
             </div>
           </div>
           <div class="howto-rules">
@@ -172,6 +174,7 @@
             <div><b>STOCKS</b> Blast out of the arena and you lose one. Last fighter standing wins.</div>
             <div><b>SPECIALS</b> Neutral, forward, up and down each do something different. Up special is your recovery.</div>
             <div><b>SHIELD</b> Blocks damage but drains. Down special counters. Time your dodges.</div>
+            <div><b>TOUCH</b> On phones, the on-screen pad and buttons appear automatically. Toggle them any time from the pause menu.</div>
           </div>
           <p class="howto-foot">Hold a direction + <kbd>F</kbd> while grounded to charge a smash attack. Tap <kbd>F</kbd> for a quick jab. You can drift in the air while attacking.</p>
         </div>
@@ -179,7 +182,25 @@
 
     </div>
 
+    <div id="touchControls" class="touch-controls hidden" aria-hidden="true">
+      <div class="touch-dpad" role="group" aria-label="Touch movement">
+        <button type="button" class="touch-btn touch-dir dir-up" data-touch="up" aria-label="Move up">↑</button>
+        <button type="button" class="touch-btn touch-dir dir-left" data-touch="left" aria-label="Move left">←</button>
+        <span class="touch-center" aria-hidden="true">P1</span>
+        <button type="button" class="touch-btn touch-dir dir-right" data-touch="right" aria-label="Move right">→</button>
+        <button type="button" class="touch-btn touch-dir dir-down" data-touch="down" aria-label="Move down">↓</button>
+      </div>
+      <div class="touch-actions" role="group" aria-label="Touch actions">
+        <button type="button" class="touch-btn touch-act act-jump" data-touch="jump" aria-label="Jump">JUMP</button>
+        <button type="button" class="touch-btn touch-act act-attack" data-touch="attack" aria-label="Attack">ATTACK</button>
+        <button type="button" class="touch-btn touch-act act-special" data-touch="special" aria-label="Special">SPECIAL</button>
+        <button type="button" class="touch-btn touch-act act-shield" data-touch="shield" aria-label="Shield">SHIELD</button>
+        <button type="button" class="touch-btn touch-act act-dodge" data-touch="dodge" aria-label="Dodge">DODGE</button>
+      </div>
+    </div>
+
     <div class="system-buttons">
+      <button id="battlePauseBtn" class="sys-btn hidden" aria-label="Pause battle" title="Pause">❚❚</button>
       <button id="soundBtn" class="sys-btn" aria-label="Mute audio" title="Mute audio">SOUND <b>ON</b></button>
       <button id="fullscreenBtn" class="sys-btn" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
     </div>
