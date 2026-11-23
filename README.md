@@ -53,7 +53,8 @@ The bundled `./start.sh` starts the project with the OMGithub preview runtime wh
 - **Smash attacks** — hold a direction + attack while grounded to charge; release to launch.
 - **Specials** — neutral, side, up, and down each behave differently. Up special is the recovery move.
 - **Gamepad** — stick/D-pad to move, A jump, X attack, B special, shoulder buttons to shield/dodge, Start to pause.
-- **Pause** — `Esc` during a battle.
+- **Touch** — on phones and tablets an on-screen D-pad and action buttons appear automatically during a battle. They control the first human slot. Enable or disable them any time with **Touch Controls** in the pause menu; the choice is remembered. Tap the ❚❚ button to pause.
+- **Pause** — `Esc` during a battle, or the pause button on screen.
 - **Damage %** rises as you take hits; higher damage means stronger knockback.
 - **Stocks** are lost when you cross a blast zone. Last fighter standing wins.
 

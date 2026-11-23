@@ -30,6 +30,10 @@ class App {
     this.acc = 0;
     this.lastHud = null;
     this.cards = new Map();
+    this.touchEnabled = false;
+    this.touchDirs = new Set();
+    this.touchDpadPointer = null;
+    this.touchActionPointers = new Map();
 
     this.canvas = $('#game');
     this.renderer = new Renderer(this.canvas);
@@ -54,7 +58,24 @@ class App {
       resultTitle: $('#resultTitle'),
       resultEyebrow: $('#resultEyebrow'),
       winnerStrip: $('#winnerStrip'),
+      touchControls: $('#touchControls'),
+      touchDpad: $('.touch-dpad'),
+      battlePauseBtn: $('#battlePauseBtn'),
+      touchToggleBtn: $('#touchToggleBtn'),
     };
+    this.touchEnabled = this.loadTouchPreference();
+  }
+
+  loadTouchPreference() {
+    try {
+      const saved = localStorage.getItem('smash-arena-touch');
+      if (saved === 'on') return true;
+      if (saved === 'off') return false;
+    } catch { /* ignore */ }
+    return Boolean(
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+      (navigator.maxTouchPoints || 0) > 0
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -142,6 +163,15 @@ class App {
       this.startBattle(clone(this.battleConfig || this.config));
     });
     $('#pauseControlsBtn').addEventListener('click', () => { audio.click(); this.openHowTo(); });
+    $('#battlePauseBtn').addEventListener('click', () => {
+      audio.click();
+      this.setPaused(true);
+    });
+    $('#touchToggleBtn').addEventListener('click', () => {
+      audio.init();
+      audio.click();
+      this.setTouchEnabled(!this.touchEnabled);
+    });
     $('#quitBtn').addEventListener('click', () => {
       audio.click();
       this.setPaused(false);
@@ -166,6 +196,8 @@ class App {
         document.exitFullscreen?.();
       }
     });
+
+    this.bindTouchControls();
 
     // Character grid
     this.els.charGrid.addEventListener('click', (e) => {
@@ -274,6 +306,128 @@ class App {
     $$('#stockPicker [data-stocks]').forEach((b) => b.classList.toggle('on', Number(b.dataset.stocks) === this.config.stocks));
   }
 
+  // -------------------------------------------------------------------------
+  // Optional on-screen controls
+  setTouchEnabled(enabled) {
+    this.touchEnabled = Boolean(enabled);
+    try { localStorage.setItem('smash-arena-touch', this.touchEnabled ? 'on' : 'off'); } catch { /* ignore */ }
+    this.syncTouch();
+    this.toast(this.touchEnabled ? 'TOUCH CONTROLS ON' : 'TOUCH CONTROLS OFF', 1600);
+  }
+
+  syncTouch() {
+    const visible = this.screen === 'battle' && this.touchEnabled && !this.paused;
+    if (this.els.touchControls) {
+      this.els.touchControls.classList.toggle('hidden', !visible);
+      this.els.touchControls.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    }
+    document.getElementById('app')?.classList.toggle('touch-mode', this.touchEnabled);
+    if (this.els.battlePauseBtn) {
+      this.els.battlePauseBtn.classList.toggle('hidden', this.screen !== 'battle');
+    }
+    if (this.els.touchToggleBtn) {
+      this.els.touchToggleBtn.classList.toggle('off', !this.touchEnabled);
+      this.els.touchToggleBtn.innerHTML = `Touch Controls <b>${this.touchEnabled ? 'ON' : 'OFF'}</b>`;
+    }
+    if (!visible) this.releaseTouchState();
+    const humanSlot = this.config.slots.findIndex((s) => s.type === 'human');
+    this.input.setTouchSlot(humanSlot >= 0 ? humanSlot : 0);
+    const badge = this.els.touchControls?.querySelector('.touch-center');
+    if (badge) badge.textContent = SLOT_NAMES[humanSlot] || 'P1';
+  }
+
+  releaseTouchState() {
+    this.touchDirs = new Set();
+    this.touchDpadPointer = null;
+    this.touchActionPointers.clear();
+    this.input.releaseTouch();
+    if (!this.els.touchControls) return;
+    this.els.touchControls.querySelectorAll('.pressed').forEach((el) => el.classList.remove('pressed'));
+  }
+
+  bindTouchControls() {
+    const pad = this.els.touchDpad;
+    const layer = this.els.touchControls;
+    if (!pad || !layer) return;
+
+    const dirsFrom = (e) => {
+      const r = pad.getBoundingClientRect();
+      const nx = (e.clientX - (r.left + r.width / 2)) / Math.max(1, r.width / 2);
+      const ny = (e.clientY - (r.top + r.height / 2)) / Math.max(1, r.height / 2);
+      const dead = 0.24;
+      const dirs = new Set();
+      if (nx < -dead) dirs.add('left');
+      if (nx > dead) dirs.add('right');
+      if (ny < -dead) dirs.add('up');
+      if (ny > dead) dirs.add('down');
+      return dirs;
+    };
+    const paintDirs = (dirs) => {
+      for (const btn of pad.querySelectorAll('[data-touch]')) {
+        btn.classList.toggle('pressed', dirs.has(btn.dataset.touch));
+      }
+      for (const dir of ['left', 'right', 'up', 'down']) {
+        if (dirs.has(dir) && !this.touchDirs.has(dir)) this.input.touchDown(dir);
+        if (!dirs.has(dir) && this.touchDirs.has(dir)) this.input.touchUp(dir);
+      }
+      this.touchDirs = dirs;
+    };
+    const endDpad = (e) => {
+      if (this.touchDpadPointer === null) return;
+      if (e && e.pointerId != null && e.pointerId !== this.touchDpadPointer) return;
+      this.touchDpadPointer = null;
+      paintDirs(new Set());
+    };
+
+    pad.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (this.touchDpadPointer !== null) return;
+      audio.init();
+      this.touchDpadPointer = e.pointerId;
+      try { pad.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+      paintDirs(dirsFrom(e));
+    }, { passive: false });
+    pad.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== this.touchDpadPointer) return;
+      e.preventDefault();
+      paintDirs(dirsFrom(e));
+    }, { passive: false });
+    pad.addEventListener('pointerup', endDpad);
+    pad.addEventListener('pointercancel', endDpad);
+    pad.addEventListener('lostpointercapture', endDpad);
+
+    const releaseButton = (btn) => {
+      if (!btn) return;
+      btn.classList.remove('pressed');
+      this.input.touchUp(btn.dataset.touch);
+    };
+    const releasePointer = (e) => {
+      const btn = this.touchActionPointers.get(e.pointerId);
+      if (!btn) return;
+      this.touchActionPointers.delete(e.pointerId);
+      releaseButton(btn);
+    };
+    layer.addEventListener('pointerdown', (e) => {
+      const btn = e.target.closest('.touch-act[data-touch]');
+      if (!btn) return;
+      e.preventDefault();
+      audio.init();
+      btn.classList.add('pressed');
+      this.touchActionPointers.set(e.pointerId, btn);
+      try { btn.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+      this.input.touchDown(btn.dataset.touch);
+    }, { passive: false });
+    layer.addEventListener('pointerup', (e) => {
+      this.touchActionPointers.delete(e.pointerId);
+      releaseButton(e.target.closest('.touch-act[data-touch]'));
+    });
+    layer.addEventListener('pointercancel', releasePointer);
+    layer.addEventListener('lostpointercapture', releasePointer);
+    window.addEventListener('pointerup', releasePointer);
+    window.addEventListener('pointercancel', releasePointer);
+    layer.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
   toast(message, ms = 2200) {
     const el = this.els.toast;
     if (!el) return;
@@ -312,6 +466,7 @@ class App {
     } else if (name === 'results') {
       audio.setMusic('menu');
     }
+    this.syncTouch();
   }
 
   // -------------------------------------------------------------------------
@@ -492,11 +647,16 @@ class App {
     this.lastHud = null;
     audio.init();
     audio.setMusic('battle');
-    const human = this.config.slots
-      .map((s, i) => (s.type === 'human' ? (i === 0 ? 'P1 WASD + F/G/H/SHIFT' : i === 1 ? 'P2 ARROWS + , . / \'' : `P${i + 1} READY`) : null))
-      .filter(Boolean)
-      .join(' · ');
-    this.toast(human || 'SPECTATOR MODE', 3200);
+    const touchHuman = this.config.slots.findIndex((s) => s.type === 'human') === 0 && this.touchEnabled;
+    if (touchHuman) {
+      this.toast('TOUCH READY · PAD TO MOVE · ❚❚ TO PAUSE', 2600);
+    } else {
+      const human = this.config.slots
+        .map((s, i) => (s.type === 'human' ? (i === 0 ? 'P1 WASD + F/G/H/SHIFT' : i === 1 ? 'P2 ARROWS + , . / \'' : `P${i + 1} READY`) : null))
+        .filter(Boolean)
+        .join(' · ');
+      this.toast(human || 'SPECTATOR MODE', 3200);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -616,6 +776,7 @@ class App {
       this.input.releaseAll();
       this.els.howto.classList.add('hidden');
     }
+    this.syncTouch();
   }
 
   openHowTo() {

@@ -34,6 +34,9 @@ export class InputManager {
     this.pads = [];
     this.keyboardEnabled = true;
     this.lastSource = null;
+    this.touchSlot = 0;
+    this.touchHeld = new Set();
+    this.touchPending = new Set();
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
     this._onBlur = () => this.releaseAll();
@@ -75,6 +78,31 @@ export class InputManager {
   releaseAll() {
     this.down.clear();
     this.pending.forEach((s) => s.clear());
+    this.releaseTouch();
+  }
+
+  // -------------------------------------------------------------------------
+  // Optional on-screen controls. They feed the first human slot so a phone or
+  // tablet can play without a keyboard or gamepad.
+  setTouchSlot(slot) {
+    this.touchSlot = Number.isInteger(slot) && slot >= 0 ? slot : 0;
+    this.releaseTouch();
+  }
+
+  touchDown(action) {
+    if (!action) return;
+    if (!this.touchHeld.has(action)) this.touchPending.add(action);
+    this.touchHeld.add(action);
+  }
+
+  touchUp(action) {
+    if (!action) return;
+    this.touchHeld.delete(action);
+  }
+
+  releaseTouch() {
+    this.touchHeld.clear();
+    this.touchPending.clear();
   }
 
   poll() {
@@ -96,6 +124,15 @@ export class InputManager {
         pressed.add(action);
         held.add(action);
       }
+    }
+
+    if (slot === this.touchSlot) {
+      for (const action of this.touchHeld) held.add(action);
+      for (const action of this.touchPending) {
+        pressed.add(action);
+        held.add(action);
+      }
+      this.touchPending.clear();
     }
 
     const pad = this.pads.find((p) => p.index === slot);
