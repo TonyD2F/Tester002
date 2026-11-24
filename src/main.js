@@ -297,7 +297,7 @@ class App {
     const btn = $('#soundBtn');
     if (!btn) return;
     btn.classList.toggle('off', !audio.enabled);
-    btn.innerHTML = `SOUND <b>${audio.enabled ? 'ON' : 'OFF'}</b>`;
+    btn.innerHTML = `<span class="sys-text">SOUND </span><b>${audio.enabled ? 'ON' : 'OFF'}</b>`;
     btn.setAttribute('aria-label', audio.enabled ? 'Mute audio' : 'Enable audio');
   }
 
@@ -437,8 +437,14 @@ class App {
     this.toastTimer = setTimeout(() => el.classList.remove('show'), ms);
   }
 
+  clearToast() {
+    clearTimeout(this.toastTimer);
+    this.els.toast?.classList.remove('show');
+  }
+
   // -------------------------------------------------------------------------
   showScreen(name) {
+    if (this.screen === 'battle' && name !== 'battle') this.clearToast();
     this.screen = name;
     this.input.releaseAll();
     this.els.title.classList.toggle('hidden', name !== 'title');

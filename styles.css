@@ -61,7 +61,7 @@ kbd {
 }
 .hud.active { opacity: 1; }
 .hud-topline {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px;
   padding: 6px 14px; border-radius: 999px;
   background: rgba(8, 7, 16, 0.55); border: 1px solid rgba(255,255,255,0.09);
@@ -72,7 +72,7 @@ kbd {
 .hud-topline .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
 .hud-topline .time { color: var(--gold); font-variant-numeric: tabular-nums; }
 .hud-cards {
-  position: absolute; top: 52px; left: 0; right: 0;
+  position: absolute; top: calc(52px + env(safe-area-inset-top)); left: 0; right: 0;
   display: flex; justify-content: center; gap: 10px;
   padding: 0 16px; flex-wrap: wrap;
 }
@@ -156,7 +156,11 @@ kbd {
 .screen {
   position: absolute; inset: 0; pointer-events: auto;
   display: flex; flex-direction: column;
-  padding: clamp(16px, 3.2vw, 42px);
+  padding:
+    calc(clamp(16px, 3.2vw, 42px) + env(safe-area-inset-top))
+    calc(clamp(16px, 3.2vw, 42px) + env(safe-area-inset-right))
+    calc(clamp(16px, 3.2vw, 42px) + env(safe-area-inset-bottom))
+    calc(clamp(16px, 3.2vw, 42px) + env(safe-area-inset-left));
   overflow: auto; overscroll-behavior: contain;
   animation: screenin 420ms var(--ease);
 }
@@ -509,7 +513,12 @@ kbd {
 .modal {
   position: absolute; inset: 0; z-index: 20; pointer-events: auto;
   display: flex; align-items: center; justify-content: center;
-  padding: 20px; background: rgba(4, 3, 9, 0.68); backdrop-filter: blur(7px);
+  padding:
+    calc(20px + env(safe-area-inset-top))
+    calc(20px + env(safe-area-inset-right))
+    calc(20px + env(safe-area-inset-bottom))
+    calc(20px + env(safe-area-inset-left));
+  background: rgba(4, 3, 9, 0.68); backdrop-filter: blur(7px);
   animation: fadein 200ms ease;
 }
 @keyframes fadein { from { opacity: 0; } }
@@ -548,8 +557,9 @@ kbd {
 .howto-foot { margin: 14px 0 0; font: 500 10px/1.6 var(--body); color: #837c99; text-align: center; }
 
 /* ---------- system buttons + toast ---------- */
-.system-buttons { position: absolute; z-index: 30; top: 14px; right: 14px; display: flex; gap: 7px; }
+.system-buttons { position: absolute; z-index: 30; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); display: flex; gap: 7px; }
 #screenLayer:has(.modal:not(.hidden)) ~ .system-buttons { display: none; }
+#screenLayer:has(.modal:not(.hidden)) ~ .toast { display: none; }
 .sys-btn {
   height: 32px; padding: 0 11px; border-radius: 7px; cursor: pointer;
   border: 1px solid rgba(255,255,255,0.14); background: rgba(10, 8, 20, 0.62);
@@ -565,7 +575,12 @@ kbd {
 .touch-controls {
   position: absolute; inset: 0; z-index: 15;
   display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 16px; padding: 0 18px calc(18px + env(safe-area-inset-bottom));
+  gap: 16px;
+  padding:
+    0
+    calc(18px + env(safe-area-inset-right))
+    calc(18px + env(safe-area-inset-bottom))
+    calc(18px + env(safe-area-inset-left));
   pointer-events: none; touch-action: none;
 }
 .touch-controls.hidden { display: none; }
@@ -634,7 +649,7 @@ kbd {
   .act-jump { min-height: 32px; }
 }
 @media (max-width: 360px) {
-  .touch-controls { padding-left: 10px; padding-right: 10px; gap: 10px; }
+  .touch-controls { padding-left: calc(10px + env(safe-area-inset-left)); padding-right: calc(10px + env(safe-area-inset-right)); gap: 10px; }
   .touch-dpad { width: 116px; height: 116px; }
   .touch-actions { grid-template-columns: repeat(2, minmax(50px, 1fr)); }
 }
@@ -668,9 +683,17 @@ kbd {
   .stage-blurb { display: none; }
 }
 @media (max-width: 760px) {
-  .screen { padding: 14px; }
+  .screen {
+    padding:
+      calc(14px + env(safe-area-inset-top))
+      calc(14px + env(safe-area-inset-right))
+      calc(14px + env(safe-area-inset-bottom))
+      calc(14px + env(safe-area-inset-left));
+  }
   .title-top, .top-bar { padding-right: 0; }
   .top-bar { grid-template-columns: auto 1fr; gap: 10px; }
+  .screen-heading { padding-right: 100px; }
+  .screen-heading h2 { font-size: 18px; }
   .level-control, .stock-control { grid-column: 1 / -1; align-items: stretch; }
   .segmented { justify-content: center; }
   .segmented button { flex: 1 1 auto; }
@@ -690,7 +713,7 @@ kbd {
   .logo-super { letter-spacing: 0.38em; margin-right: -0.38em; }
   .title-actions { flex-direction: column; width: min(320px, 100%); }
   .title-actions .btn { width: 100%; }
-  .hud-cards { top: 46px; gap: 5px; padding: 0 6px; }
+  .hud-cards { top: calc(46px + env(safe-area-inset-top)); gap: 5px; padding: 0 6px; }
   .hud-card { min-width: 0; flex: 1 1 0; padding: 6px 7px; gap: 6px; }
   .hud-portrait { width: 28px; height: 28px; border-radius: 6px; }
   .hud-name { font-size: 9px; }
@@ -699,16 +722,30 @@ kbd {
   .hud-dmg small { font-size: 8px; }
   .hud-stocks { margin-top: 3px; gap: 2px; }
   .stock-pip { width: 7px; height: 7px; }
-  .hud-topline { top: 8px; font-size: 8px; padding: 5px 10px; }
+  .hud-topline { top: calc(8px + env(safe-area-inset-top)); font-size: 8px; padding: 5px 10px; }
   .howto-grid { grid-template-columns: 1fr; }
   .howto-rules { grid-template-columns: 1fr; }
   .result-row { grid-template-columns: 24px 30px 1fr repeat(2, 44px); }
   .result-row .stat:nth-last-child(1) { display: none; }
-  .system-buttons { top: 8px; right: 8px; }
-  .sys-btn { height: 28px; font-size: 7px; padding: 0 8px; }
-  #soundBtn { display: none; }
-  .results-screen { padding: 10px; }
+  .system-buttons { top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); gap: 6px; }
+  .sys-btn { height: 36px; font-size: 8px; padding: 0 10px; border-radius: 8px; }
+  #soundBtn { padding: 0 11px; }
+  #soundBtn .sys-text { display: none; }
+  #soundBtn b { font-size: 9px; letter-spacing: 0.1em; }
+  #battlePauseBtn { min-width: 40px; justify-content: center; }
+  #fullscreenBtn { width: 40px; font-size: 16px; }
+  .results-screen {
+    padding:
+      calc(10px + env(safe-area-inset-top))
+      calc(10px + env(safe-area-inset-right))
+      calc(10px + env(safe-area-inset-bottom))
+      calc(10px + env(safe-area-inset-left));
+  }
   .results-card { padding: 16px; }
+}
+@media (max-width: 560px) {
+  .hud-topline { top: calc(52px + env(safe-area-inset-top)); }
+  .hud-cards { top: calc(88px + env(safe-area-inset-top)); }
 }
 @media (max-width: 520px) {
   .brandmark { font-size: 8px; letter-spacing: 0.16em; }
